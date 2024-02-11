@@ -1,21 +1,21 @@
 # Writeup Referrrrer from Hero-CTF
 
 ## Descrição:
-O Writeup em questão, se refere ao desafio Referrrrer, um desafio que envolve a exploração de referrer-policy.
-Nesse writeup será explicado como o referer funciona e como sua exploração foi possível.
-No desafio, nos foi oferecido um link para download do código fonte [link](./Referrrrer.zip) 
+O Writeup em questão, se refere ao desafio Referrrrer, um desafio que envolve a exploração de referrer-policy.  
+Nesse writeup será explicado como o referer funciona e como sua exploração foi possível. 
 
-Após levantar o ambiente localmente em docker, e acessa-lo observamos a seguinte tela abaixo:
+No desafio, foi oferecido um link para download do código fonte [link](./Referrrrer.zip)   
+Após levantar o ambiente localmente em docker e acessa-lo, observamos a seguinte tela:
 
 ![TelaInicial](./png/telainicial.png) 
 
 
 
-olhandos nos arquivos do zip que foi nos passado, procuramos por possíveis brechas ou insights que possam haver 
-no código.
-Logo de cara, dois arquivos chamam mais nossa atençao pelo seu conteúdo:  nginx.conf e index.js
+olhando nos arquivos do zip que foi passado, procuramos por possíveis brechas ou insights que possam haver 
+no código.  
+Logo de início, dois arquivos chamam mais nossa atençao pelo seu conteúdo:  nginx.conf e index.js
 
-No arquivo do nginx.conf, conforme ilustrado abaixo, nós obervamos que o proxy do nginx  ao fazer um GET em /admin está trabalhando com um condicional que valida se  a variável http_referer é diferente de "https://admin.internal.com" e para qualquer refer que for diferente desse valor, seja retornado um status code 403.
+No arquivo do nginx.conf, conforme ilustrado abaixo, nós obervamos que o proxy do nginx  ao fazer um **GET** em **/admin** está trabalhando com um condicional que valida se  a variável **$http_referer** é diferente de **"https://admin.internal.com"** e para qualquer refer que for diferente desse valor, seja retornado um status-code 403.
 
 ![nginx.conf](./png/nginx-conf.png)
 
@@ -37,14 +37,19 @@ Voltamos ao burp e tentamos passar esse Referer = YOU_SHOUD_NOT_PASS!", porém, 
 ![referer-error](./png/referer-error.png)
 
 
-E é agora que paramos no ponto central desse desafio, sabemos que de alguma forma esses dois referers aparentam  serem requeridos, porém não sabemos como.
-Durante algumas pesquisas, podemos entender melhor sobre o refer. Trata-se de um cabeçalho que passa a origem do host solicitante para a aplicação  que está sendo requerida, porém, esse tipo de cabeçalho pode expor informações privadas de um host para o servidor alvo, se tornando por tanto um ponto vulnerabilidade.
+E é agora que paramos no ponto central desse desafio, sabemos que de alguma forma esses dois referers aparentam  serem requeridos, porém não sabemos como,durante algumas pesquisas, podemos entender melhor sobre o referer.  
+Trata-se de um cabeçalho que passa a origem do host solicitante para a aplicação  que está sendo requerida, porém, esse tipo de cabeçalho pode expor informações privadas de um host para o servidor alvo, se tornando por tanto um ponto de vulnerabilidade.
 
-Após uma busca mais aprofundada em https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Headers/Referrer-Policy , temos logo no início do documento uma nota:
-    " Nota: O nome original do cabeçalho Referer é um erro ortográfico da palavra "referrer". O cabeçalho Referrer-Policy não compartilha do mesmo erro ortográfico."
+Após uma busca mais aprofundada sobre o **referer** em:https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Headers/Referer, e em seguida https://developer.mozilla.org/pt-BR/docs/Web/HTTP/Headers/Referrer-Policy , temos logo no início do documento uma nota:  
+    **" Nota: O nome original do cabeçalho Referer é um erro ortográfico da palavra "referrer". O cabeçalho Referrer-Policy não compartilha do mesmo erro ortográfico."**
 
-Pesquisando um pouco mais sobre o referer para requisições do Express js, encontramos que uma das formas antigas de requisição é o referer que é escrito errado desde 1996 e o express utiliza a ortografia mais atual 'referrer'. passamos ele no burp da seguinte forma:
+Pesquisando um pouco mais sobre o referer para requisições do Express js, encontramos que uma das formas antigas de requisição é o referer que é escrito errado desde 1996 e o express utiliza a ortografia mais atual 'referrer' no formato de  req.header('Referrer') como ilustrado numa issue do stackoverflow.  
+![Referrer-express](./png/referrer-express.png)
 
+
+
+
+passamos ele no burp da seguinte forma:
 ![burp-request-sucess](./png/requisicao-passando-pelo-express.png)
 
 Com isso, nós conseguimos capturar a flag.
